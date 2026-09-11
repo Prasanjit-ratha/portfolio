@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prasanjit Ratha — Cybernetic Interactive Portfolio</title>
+  
+  <!-- Font Awesome & Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-main: #02040a;
+      --bg-card: rgba(8, 15, 30, 0.7);
+      --border-color: rgba(6, 182, 212, 0.2);
+      --accent-cyan: #00f0ff;
+      --accent-magenta: #ff007f;
+      --accent-purple: #7000ff;
+      --accent-glow: rgba(0, 240, 255, 0.5);
+      --text-main: #f0f6fc;
+      --text-muted: #8b949e;
+      --gradient-cyber: linear-gradient(135deg, #00f0ff 0%, #7000ff 50%, #ff007f 100%);
+      --font-heading: 'Orbitron', sans-serif;
+      --font-code: 'Fira Code', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-main); }
+    ::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
+
+    /* Matrix Canvas */
+    #matrix-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Cyber Cursor Glow */
+    #cyber-cursor {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(0, 240, 255, 0.12) 0%, rgba(255, 0, 127, 0.04) 40%, transparent 70%);
+      position: fixed;
+      top: 0;
+      left: 0;
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+      transition: width 0.3s, height 0.3s;
+    }
+
+    /* Layout */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* HUD Navbar Header */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(2, 4, 10, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 100;
+      padding: 1rem 0;
+    }
+
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 800;
+      background: var(--gradient-cyber);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-decoration: none;
+      letter-spacing: 1px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: var(--font-code);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent-cyan);
+      text-shadow: 0 0 10px var(--accent-cyan);
+    }
+
+    /* Sections */
+    section { padding: 9rem 0 4rem; }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px) scale(0.98);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .section-subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 3.5rem;
+      font-family: var(--font-code);
+    }
+
+    /* Cyber Hologram Cards */
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 2.25rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.1), transparent);
+      transition: 0.5s;
+    }
+
+    .glass-card:hover::before { left: 100%; }
+
+    .glass-card:hover {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.25);
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: 5rem;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 1.25rem;
+      background: rgba(0, 240, 255, 0.08);
+      border: 1px solid var(--accent-cyan);
+      border-radius: 4px;
+      color: var(--accent-cyan);
+      font-family: var(--font-code);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 2rem;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+    }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 5.5vw, 4.5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      letter-spacing: -1px;
+    }
+
+    .hero-title span {
+      background: var(--gradient-cyber);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+    }
+
+    /* Buttons */
+    .btn-group { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+
+    .btn {
+      padding: 1rem 2rem;
+      border-radius: 6px;
+      font-family: var(--font-code);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .btn-primary {
+      background: var(--accent-cyan);
+      color: #000;
+      border: 1px solid var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+    }
+
+    .btn-primary:hover {
+      background: #000;
+      color: var(--accent-cyan);
+      box-shadow: 0 0 35px rgba(0, 240, 255, 0.8);
+      transform: translateY(-3px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent-magenta);
+      color: var(--accent-magenta);
+      box-shadow: 0 0 20px rgba(255, 0, 127, 0.4);
+      transform: translateY(-3px);
+    }
+
+    /* Skills Grid */
+    .skill-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+
+    .tab-btn {
+      padding: 0.5rem 1.25rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-family: var(--font-code);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 4px;
+    }
+
+    .tab-btn.active, .tab-btn:hover {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+      background: rgba(0, 240, 255, 0.1);
+    }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 3.5rem;
+    }
+
+    .skill-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem;
+      background: rgba(8, 15, 30, 0.8);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .skill-card:hover {
+      border-color: var(--accent-cyan);
+      transform: scale(1.03);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+    }
+
+    /* CLI HUD Floating Toggle */
+    #cli-toggle-btn {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      background: #000;
+      border: 2px solid var(--accent-cyan);
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      cursor: pointer;
+      z-index: 999;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    #cli-toggle-btn:hover {
+      transform: scale(1.1) rotate(90deg);
+      background: var(--accent-cyan);
+      color: #000;
+    }
+
+    /* CLI Terminal Modal Drawer */
+    #cli-terminal {
+      position: fixed;
+      bottom: -100%;
+      left: 0; right: 0;
+      height: 380px;
+      background: rgba(2, 4, 10, 0.95);
+      border-top: 2px solid var(--accent-cyan);
+      backdrop-filter: blur(20px);
+      z-index: 998;
+      transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 -10px 40px rgba(0, 240, 255, 0.2);
+    }
+
+    #cli-terminal.active { bottom: 0; }
+
+    .cli-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+      color: var(--accent-cyan);
+    }
+
+    .cli-output {
+      flex: 1;
+      overflow-y: auto;
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+      color: #a7f3d0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .cli-input-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .cli-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--accent-cyan);
+      font-family: var(--font-code);
+      font-size: 0.9rem;
+    }
+
+    /* Custom Project Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+    .modal-content {
+      background: #080f1e;
+      border: 1px solid var(--accent-cyan);
+      border-radius: 1rem;
+      max-width: 600px;
+      width: 90%;
+      padding: 2.5rem;
+      position: relative;
+      transform: scale(0.8);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 0 50px rgba(0, 240, 255, 0.3);
+    }
+
+    .modal-overlay.active .modal-content { transform: scale(1); }
+
+    .close-modal {
+      position: absolute;
+      top: 1.25rem; right: 1.25rem;
+      background: none; border: none;
+      color: var(--text-muted); font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 5rem 0 2rem;
+      text-align: center;
+      background: rgba(2, 4, 10, 0.9);
+    }
+
+    .contact-btn {
+      padding: 0.85rem 1.5rem;
+      background: rgba(8, 15, 30, 0.8);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-main);
+      text-decoration: none;
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      transition: all 0.3s ease;
+      margin: 0.5rem;
+    }
+
+    .contact-btn:hover {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+      transform: translateY(-3px);
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      #cyber-cursor { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Matrix Background Canvas -->
+  <canvas id="matrix-canvas"></canvas>
+
+  <!-- Interactive Cyber Spotlight -->
+  <div id="cyber-cursor"></div>
+
+  <!-- HUD Navigation -->
+  <nav>
+    <div class="container nav-container">
+      <a href="#about" class="logo">&lt;PRASANJIT_RATHA/&gt;</a>
+      <ul class="nav-links">
+        <li><a href="#about">// About</a></li>
+        <li><a href="#skills">// Skills</a></li>
+        <li><a href="#projects">// Projects</a></li>
+        <li><a href="#hackathon">// Hackathon</a></li>
+        <li><a href="#education">// Education</a></li>
+        <li><a href="#contact">// Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="about" class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <i class="fa-solid fa-terminal"></i> Full-Stack System Architecture
+      </div>
+      <h1 class="hero-title">Architecting <span>Digital Platforms</span> & GenAI Systems.</h1>
+      <p style="font-size: 1.15rem; color: var(--text-muted); max-width: 700px; margin-bottom: 2.5rem;">
+        Computer Science & Engineering student specializing in full-stack web platforms, decentralized logic, and AI integrations.
+      </p>
+
+      <div class="glass-card tilt-card" style="margin-bottom: 2.5rem; border-left: 4px solid var(--accent-cyan);">
+        <h4 style="font-family: var(--font-code); color: var(--accent-cyan); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem;">
+          <i class="fa-solid fa-crosshair"></i> Core Objective
+        </h4>
+        <p style="font-style: italic; font-size: 1rem;">
+          “I want to become a skilled full-stack developer capable of building complete web applications and creating technology that solves real-world problems.”
+        </p>
+      </div>
+
+      <div class="btn-group">
+        <a href="#projects" class="btn btn-primary" onclick="playAudioEffect('click')">
+          Deploy Projects <i class="fa-solid fa-arrow-right"></i>
+        </a>
+        <a href="https://github.com/Prasanjit-ratha" target="_blank" class="btn btn-secondary" onclick="playAudioEffect('click')">
+          <i class="fa-brands fa-github"></i> GitHub Matrix
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Skills Matrix -->
+  <section id="skills" class="reveal">
+    <div class="container">
+      <h2 class="section-title"><i class="fa-solid fa-microchip" style="color: var(--accent-cyan);"></i> Tech Stack</h2>
+      <p class="section-subtitle">// Interactive breakdown of engineering tools and languages.</p>
+
+      <div class="skill-tabs">
+        <button class="tab-btn active" onclick="filterSkills('all')">All Skills</button>
+        <button class="tab-btn" onclick="filterSkills('intermediate')">Intermediate</button>
+        <button class="tab-btn" onclick="filterSkills('learning')">Actively Learning</button>
+        <button class="tab-btn" onclick="filterSkills('foundational')">Foundational</button>
+      </div>
+
+      <div class="skills-grid" id="skills-container"></div>
+    </div>
+  </section>
+
+  <!-- Projects Section -->
+  <section id="projects" class="reveal">
+    <div class="container">
+      <h2 class="section-title"><i class="fa-solid fa-cubes" style="color: var(--accent-cyan);"></i> Built Systems</h2>
+      <p class="section-subtitle">// Hackathon applications engineered under timed constraints.</p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
+        <div class="glass-card tilt-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <span style="font-family: var(--font-code); font-size: 0.75rem; color: var(--accent-magenta);">[LEARNATHON 5.0]</span>
+            <h3 style="font-family: var(--font-heading); font-size: 1.4rem; margin: 0.5rem 0;">Uncle-Factz</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">AI-powered fact verification engine using decentralized GenAI consensus mechanisms.</p>
+          </div>
+          <div>
+            <button class="btn btn-secondary" style="width: 100%; justify-content: center; margin-bottom: 0.5rem;" onclick="openModal('uncle-factz')">View Architecture</button>
+            <a href="https://github.com/Prasanjit-ratha/Uncle-factz" target="_blank" class="btn btn-primary" style="width: 100%; justify-content: center;">Source Code</a>
+          </div>
+        </div>
+
+        <div class="glass-card tilt-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <span style="font-family: var(--font-code); font-size: 0.75rem; color: var(--accent-cyan);">[LEARNATHON 5.0]</span>
+            <h3 style="font-family: var(--font-heading); font-size: 1.4rem; margin: 0.5rem 0;">Hospital Platform</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Unified health services infrastructure simplifying patient registration and workflow handling.</p>
+          </div>
+          <div>
+            <button class="btn btn-secondary" style="width: 100%; justify-content: center; margin-bottom: 0.5rem;" onclick="openModal('hospital')">View Architecture</button>
+            <a href="https://github.com/55HuNTeR55/Unified-hospital-mangment-system" target="_blank" class="btn btn-primary" style="width: 100%; justify-content: center;">Source Code</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hackathon Highlight -->
+  <section id="hackathon" class="reveal">
+    <div class="container">
+      <div class="glass-card tilt-card" style="border-color: var(--accent-magenta); background: linear-gradient(135deg, rgba(255, 0, 127, 0.08), rgba(8, 15, 30, 0.9));">
+        <span style="color: var(--accent-magenta); font-family: var(--font-code); font-size: 0.85rem;">🏆 KEY COMPETITION MILESTONE</span>
+        <h2 style="font-family: var(--font-heading); font-size: 1.8rem; margin: 0.5rem 0;">Learnathon 5.0 — Round 2 Qualifier</h2>
+        <p style="color: var(--text-muted);">Engineered a decentralized solution over a 72-hour sprint with a team of 3 developers, qualifying for Round 2.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Education Section -->
+  <section id="education" class="reveal">
+    <div class="container">
+      <h2 class="section-title"><i class="fa-solid fa-graduation-cap" style="color: var(--accent-cyan);"></i> Academic History</h2>
+      <p class="section-subtitle">// Educational journey and technical credentials.</p>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div class="glass-card tilt-card">
+          <span style="font-family: var(--font-code); color: var(--accent-cyan); font-size: 0.8rem;">2025 – 2029</span>
+          <h3 style="margin-top: 0.25rem;">B.Tech — Computer Science</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">GIET University, Gunupur</p>
+        </div>
+        <div class="glass-card tilt-card">
+          <span style="font-family: var(--font-code); color: var(--text-muted); font-size: 0.8rem;">2023 – 2025</span>
+          <h3 style="margin-top: 0.25rem;">Higher Secondary (PCM + IT)</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Odisha Adarsh Vidyalaya</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Floating HUD CLI Button -->
+  <button id="cli-toggle-btn" onclick="toggleCLI()" title="Toggle HUD Terminal (Press ~)">
+    <i class="fa-solid fa-terminal"></i>
+  </button>
+
+  <!-- Interactive CLI HUD Terminal -->
+  <div id="cli-terminal">
+    <div class="cli-header">
+      <span><i class="fa-solid fa-terminal"></i> PRASANJIT_CLI_v2.0</span>
+      <span style="cursor: pointer;" onclick="toggleCLI()">&times; CLOSE</span>
+    </div>
+    <div class="cli-output" id="cli-output">
+      <div>Welcome to Prasanjit's Interactive Terminal. Type <span style="color: var(--accent-cyan);">help</span> to list commands.</div>
+    </div>
+    <div class="cli-input-container">
+      <span style="color: var(--accent-cyan); font-family: var(--font-code);">&gt;</span>
+      <input type="text" class="cli-input" id="cli-input" placeholder="Type a command..." onkeydown="handleCLICommand(event)">
+    </div>
+  </div>
+
+  <!-- Interactive Project Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-content">
+      <button class="close-modal" onclick="closeModal()">&times;</button>
+      <h3 id="modal-title" style="font-family: var(--font-heading); font-size: 1.4rem; color: var(--accent-cyan); margin-bottom: 0.75rem;"></h3>
+      <p id="modal-body" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;"></p>
+      <div id="modal-contribution" style="background: rgba(0,0,0,0.6); padding: 1rem; border-radius: 6px; font-family: var(--font-code); font-size: 0.85rem; border: 1px solid var(--border-color);"></div>
+    </div>
+  </div>
+
+  <!-- Contact Footer -->
+  <footer id="contact">
+    <div class="container">
+      <h2 style="font-family: var(--font-heading); font-size: 1.8rem;">Initialize Connection</h2>
+      <p style="color: var(--text-muted); margin-top: 0.5rem; font-family: var(--font-code); font-size: 0.9rem;">Ready for open collaboration and engineering inquiries.</p>
+
+      <div style="margin: 2.5rem 0;">
+        <a href="mailto:akashratha237@gmail.com" class="contact-btn"><i class="fa-solid fa-envelope"></i> Email</a>
+        <a href="https://www.linkedin.com/in/prasanjitratha" target="_blank" class="contact-btn"><i class="fa-brands fa-linkedin"></i> LinkedIn</a>
+        <a href="https://github.com/Prasanjit-ratha" target="_blank" class="contact-btn"><i class="fa-brands fa-github"></i> GitHub</a>
+      </div>
+
+      <div style="font-family: var(--font-code); font-size: 0.75rem; color: var(--text-muted);">
+        © Prasanjit Ratha. Interactive Cybernetic Systems Architecture.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    /* Synthetic Web Audio FX Engine */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playAudioEffect(type) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'click') {
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+      } else if (type === 'hover') {
+        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.03);
+      }
+    }
+
+    /* Skills Engine Data */
+    const skillsData = [
+      { name: "HTML5", category: "Frontend", level: "intermediate" },
+      { name: "CSS3", category: "Frontend", level: "intermediate" },
+      { name: "JavaScript ES6+", category: "Frontend", level: "intermediate" },
+      { name: "C Programming", category: "Core", level: "intermediate" },
+      { name: "React.js", category: "Framework", level: "learning" },
+      { name: "Node.js", category: "Backend", level: "learning" },
+      { name: "Java", category: "Core", level: "foundational" },
+      { name: "Python", category: "Core", level: "foundational" }
+    ];
+
+    function renderSkills(filter = 'all') {
+      const container = document.getElementById('skills-container');
+      container.innerHTML = '';
+      const filtered = filter === 'all' ? skillsData : skillsData.filter(s => s.level === filter);
+
+      filtered.forEach(skill => {
+        const card = document.createElement('div');
+        card.className = 'skill-card';
+        card.onmouseenter = () => playAudioEffect('hover');
+        card.innerHTML = `
+          <span style="font-weight: 600; font-family: var(--font-code); color: ${skill.level === 'learning' ? 'var(--accent-cyan)' : 'var(--text-main)'}">${skill.name}</span>
+          <span style="font-size: 0.7rem; font-family: var(--font-code); padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.05); border-radius: 4px; color: var(--text-muted);">${skill.category}</span>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function filterSkills(type) {
+      playAudioEffect('click');
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      renderSkills(type);
+    }
+
+    /* Interactive CLI System */
+    function toggleCLI() {
+      playAudioEffect('click');
+      document.getElementById('cli-terminal').classList.toggle('active');
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === '`' || e.key === '~') {
+        e.preventDefault();
+        toggleCLI();
+      }
+    });
+
+    function handleCLICommand(e) {
+      if (e.key === 'Enter') {
+        playAudioEffect('click');
+        const input = document.getElementById('cli-input');
+        const cmd = input.value.trim().toLowerCase();
+        const output = document.getElementById('cli-output');
+
+        const userCmd = document.createElement('div');
+        userCmd.innerHTML = `<span style="color: var(--accent-magenta);">&gt; ${input.value}</span>`;
+        output.appendChild(userCmd);
+
+        const response = document.createElement('div');
+        switch(cmd) {
+          case 'help':
+            response.innerHTML = 'Available commands: <span style="color:var(--accent-cyan)">skills</span>, <span style="color:var(--accent-cyan)">projects</span>, <span style="color:var(--accent-cyan)">clear</span>, <span style="color:var(--accent-cyan)">contact</span>';
+            break;
+          case 'skills':
+            response.innerHTML = 'Stack: HTML, CSS, JavaScript, C, React, Node.js, Java, Python';
+            break;
+          case 'projects':
+            response.innerHTML = 'Projects: Uncle-Factz (Learnathon 5.0), Unified Hospital Management System';
+            break;
+          case 'contact':
+            response.innerHTML = 'Email: akashratha237@gmail.com | GitHub: Prasanjit-ratha';
+            break;
+          case 'clear':
+            output.innerHTML = '';
+            input.value = '';
+            return;
+          default:
+            response.innerHTML = 'Command not recognized. Type <span style="color:var(--accent-cyan)">help</span>.';
+        }
+        output.appendChild(response);
+        output.scrollTop = output.scrollHeight;
+        input.value = '';
+      }
+    }
+
+    /* Modal System */
+    const projectDetails = {
+      'uncle-factz': {
+        title: 'Uncle-Factz Platform',
+        body: 'An AI-powered fact-checking network designed during Learnathon 5.0. Utilizes GenAI consensus models to evaluate information integrity.',
+        contribution: 'Personal Contribution: Designed user interfaces, layout structure, and managed project concept presentation.'
+      },
+      'hospital': {
+        title: 'Hospital Management System',
+        body: 'A centralized concept streamlining health workflows and administrative tasks across hospital management modules.',
+        contribution: 'Personal Contribution: Developed system design architecture, project structure, and feature layouts.'
+      }
+    };
+
+    function openModal(key) {
+      playAudioEffect('click');
+      const data = projectDetails[key];
+      document.getElementById('modal-title').innerText = data.title;
+      document.getElementById('modal-body').innerText = data.body;
+      document.getElementById('modal-contribution').innerText = data.contribution;
+      document.getElementById('modal-overlay').classList.add('active');
+    }
+
+    function closeModal() {
+      playAudioEffect('click');
+      document.getElementById('modal-overlay').classList.remove('active');
+    }
+
+    /* Cyber Cursor Spotlight */
+    const cursor = document.getElementById('cyber-cursor');
+    let mouseX = 0, mouseY = 0;
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX; mouseY = e.clientY;
+      cursor.style.left = mouseX + 'px';
+      cursor.style.top = mouseY + 'px';
+    });
+
+    /* Dynamic 3D Holographic Card Tilt */
+    document.addEventListener('mousemove', (e) => {
+      document.querySelectorAll('.tilt-card').forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const rotateX = (y - centerY) / 10;
+          const rotateY = (centerX - x) / 10;
+          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px)`;
+        } else {
+          card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+        }
+      });
+    });
+
+    /* Scroll Observer */
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('active');
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    /* Matrix Particle Canvas Engine */
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    class Particle {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.8;
+        this.vy = (Math.random() - 0.5) * 0.8;
+        this.size = Math.random() * 1.5 + 0.5;
+      }
+      update() {
+        this.x += this.vx; this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+      }
+      draw() {
+        ctx.fillStyle = '#00f0ff';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    const particles = Array.from({ length: 70 }, () => new Particle());
+
+    function animateMatrix() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p, i) => {
+        p.update(); p.draw();
+        
+        // Draw constellation lines
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+          if (dist < 100) {
+            ctx.strokeStyle = `rgba(0, 240, 255, ${0.15 * (1 - dist / 100)})`;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+
+        // Draw connections to cursor
+        const cursorDist = Math.hypot(p.x - mouseX, p.y - mouseY);
+        if (cursorDist < 120) {
+          ctx.strokeStyle = `rgba(255, 0, 127, ${0.4 * (1 - cursorDist / 120)})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(mouseX, mouseY);
+          ctx.stroke();
+        }
+      });
+      requestAnimationFrame(animateMatrix);
+    }
+
+    // App Init
+    renderSkills();
+    animateMatrix();
+  </script>
+</body>
+</html>
